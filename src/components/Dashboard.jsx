@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Brain, Target, Zap, BookOpen, Download, Upload, Trash2, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react'
 import CategoryCard from './CategoryCard'
+import CoursesPreview from './CoursesPreview'
 import { CATEGORIES, getAllQuestions } from '../data/quizData'
 
 function GlobalStats({ scores }) {
@@ -19,7 +20,7 @@ function GlobalStats({ scores }) {
     { icon: Target, label: 'Questions tentées', value: `${totalAnswered}/${totalQuestions}`, color: '#60a5fa' },
     { icon: Brain, label: 'Taux de réussite', value: `${globalPct}%`, color: '#22d3ee' },
     { icon: Zap, label: 'Score global', value: `${totalCorrect}/${totalAnswered || '—'}`, color: '#4ade80' },
-    { icon: BookOpen, label: 'Catégories maîtrisées', value: `${readyCount}/4`, color: '#fbbf24' },
+    { icon: BookOpen, label: 'Catégories maîtrisées', value: `${readyCount}/${CATEGORIES.length}`, color: '#fbbf24' },
   ]
 
   return (
@@ -221,6 +222,8 @@ export default function Dashboard({ scores, onStartQuiz, onExport, onImport, onR
           onReset={onReset}
           importStatus={importStatus}
         />
+
+        <CoursesPreview categories={CATEGORIES} />
 
         {/* 5-category grid : 2 cols on md, last card centered if odd */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

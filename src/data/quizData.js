@@ -1,3 +1,5 @@
+import { attachCourseModules } from './courseModulesAttach.js'
+
 // ─── Helper ──────────────────────────────────────────────────────────────────
 export function getAllQuestions(category) {
   return category.sets.flatMap(s => s.questions)
@@ -38,7 +40,7 @@ export function prepareQuestionForSession(question) {
 // En éditant, vise des formulations de longueur / densité comparables entre les 4 options pour limiter le cue visuel.
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
-export const CATEGORIES = [
+const RAW_CATEGORIES = [
   // ═══════════════════════════════════════════════════════════════════ SQL ════
   {
     id: 'sql',
@@ -1859,3 +1861,5 @@ export const CATEGORIES = [
     ],
   },
 ]
+
+export const CATEGORIES = attachCourseModules(RAW_CATEGORIES)
