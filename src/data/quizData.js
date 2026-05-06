@@ -12,6 +12,31 @@ export function shuffle(arr) {
   return a
 }
 
+/**
+ * Pour chaque QCM : mélange l'ordre des propositions et met à jour l'index `correct`.
+ * Évite le biais "toujours la réponse A" et réduit l'effet "la plus longue = la bonne".
+ */
+export function prepareQuestionForSession(question) {
+  if (question.type !== 'mcq' || !Array.isArray(question.options) || question.options.length < 2) {
+    return { ...question }
+  }
+  const order = shuffle(question.options.map((_, i) => i))
+  const newOptions = order.map((i) => question.options[i])
+  const newCorrect = order.indexOf(question.correct)
+  if (newCorrect < 0) {
+    return { ...question }
+  }
+  return {
+    ...question,
+    options: newOptions,
+    correct: newCorrect,
+  }
+}
+
+// Données QCM : bonne réponse = `options[correct]` (souvent correct: 0 dans le fichier source).
+// À chaque session, `prepareQuestionForSession` mélange l'ordre affiché et réindexe `correct`.
+// En éditant, vise des formulations de longueur / densité comparables entre les 4 options pour limiter le cue visuel.
+
 // ─── Data ─────────────────────────────────────────────────────────────────────
 export const CATEGORIES = [
   // ═══════════════════════════════════════════════════════════════════ SQL ════

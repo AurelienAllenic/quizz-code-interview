@@ -3,7 +3,7 @@ import { AnimatePresence } from 'framer-motion'
 import Dashboard from './components/Dashboard'
 import QuizMode from './components/QuizMode'
 import SetSelector from './components/SetSelector'
-import { CATEGORIES, getAllQuestions, shuffle } from './data/quizData'
+import { CATEGORIES, getAllQuestions, shuffle, prepareQuestionForSession } from './data/quizData'
 
 const STORAGE_KEY = 'fullstack-quiz-scores'
 const EXPORT_VERSION = 1
@@ -103,17 +103,18 @@ export default function App() {
     const category = CATEGORIES.find(c => c.id === pendingCategory)
     if (!category) return
 
-    let questions
+    let raw
     let label
     if (setId === 'all') {
-      questions = shuffle(getAllQuestions(category))
+      raw = shuffle(getAllQuestions(category))
       label = 'Tout mélangé'
     } else {
       const set = category.sets.find(s => s.id === setId)
-      questions = shuffle(set?.questions ?? [])
+      raw = shuffle(set?.questions ?? [])
       label = set?.label ?? setId
     }
 
+    const questions = raw.map(prepareQuestionForSession)
     setSessionQuestions(questions)
     setSessionLabel(label)
     setPendingCategory(null)

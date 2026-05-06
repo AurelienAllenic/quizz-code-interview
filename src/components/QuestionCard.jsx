@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, XCircle, Lightbulb, ChevronRight } from 'lucide-react'
 
 const themeColors = {
-  sql: { accent: '#3b82f6', accentLight: '#60a5fa', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.3)' },
-  node: { accent: '#22c55e', accentLight: '#4ade80', bg: 'rgba(34,197,94,0.08)', border: 'rgba(34,197,94,0.3)' },
-  react: { accent: '#06b6d4', accentLight: '#22d3ee', bg: 'rgba(6,182,212,0.08)', border: 'rgba(6,182,212,0.3)' },
-  django: { accent: '#f59e0b', accentLight: '#fbbf24', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.3)' },
+  sql:        { accent: '#3b82f6', accentLight: '#60a5fa', bg: 'rgba(59,130,246,0.08)',  border: 'rgba(59,130,246,0.3)' },
+  node:       { accent: '#22c55e', accentLight: '#4ade80', bg: 'rgba(34,197,94,0.08)',   border: 'rgba(34,197,94,0.3)' },
+  react:      { accent: '#06b6d4', accentLight: '#22d3ee', bg: 'rgba(6,182,212,0.08)',   border: 'rgba(6,182,212,0.3)' },
+  django:     { accent: '#f59e0b', accentLight: '#fbbf24', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.3)' },
+  typescript: { accent: '#6366f1', accentLight: '#818cf8', bg: 'rgba(99,102,241,0.08)', border: 'rgba(99,102,241,0.3)' },
 }
 
 function renderExplanation(text) {
@@ -110,7 +111,7 @@ export default function QuestionCard({ question, theme, questionNumber, total, o
 
           return (
             <motion.button
-              key={idx}
+              key={`${question.id}-${idx}`}
               onClick={() => handleSelect(idx)}
               disabled={isAnswered}
               whileHover={!isAnswered ? { scale: 1.01, x: 4 } : {}}
