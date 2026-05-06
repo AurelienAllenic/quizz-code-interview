@@ -104,4 +104,4 @@ React 19 · Vite 8 · Tailwind CSS v4 (`@tailwindcss/vite`) · Framer Motion · 
 
 ## Licence
 
-Ce projet est sous **licence MIT** : tu peux réutiliser et modifier le code librement, sous réserve de conserver l’avis de copyright et le texte de la licence. Les détails juridiques sont dans le fichier [`LICENSE`](LICENSE) à la racine du dépôt.
+Ce projet est sous **licence MIT** : tu peux réutiliser et modifier le code librement, sous réserve de conserver l’avis de copyright et le texte de la licence. Le fichier texte complet se trouve à la racine : [`LICENSE`](https://github.com/AurelienAllenic/quizz-code-interview/blob/main/LICENSE) — en local, ouvre plutôt `./LICENSE` dans l’explorateur de fichiers du dépôt cloné.
