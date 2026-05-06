@@ -104,4 +104,4 @@ React 19 · Vite 8 · Tailwind CSS v4 (`@tailwindcss/vite`) · Framer Motion · 
 
 ## Licence
 
-Projet personnel publié sur GitHub pour la révision et le partage ; tu peux préciser une licence (MIT, ISC, etc.) dans le dépôt si tu souhaites encadrer la réutilisation du code.
+Ce projet est sous **licence MIT** : tu peux réutiliser et modifier le code librement, sous réserve de conserver l’avis de copyright et le texte de la licence. Les détails juridiques sont dans le fichier [`LICENSE`](LICENSE) à la racine du dépôt.
