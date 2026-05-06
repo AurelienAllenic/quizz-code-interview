@@ -29,10 +29,12 @@ npm install
 | Commande | Description |
 |----------|-------------|
 | `npm run dev` | Lance le serveur de développement (Vite), par défaut sur [http://localhost:5173](http://localhost:5173). |
-| `npm run build` | Build de production (`tsc` + `vite build` selon `package.json`). |
+| `npm run build` | Build de production (`vite build` → dossier `dist/`). |
 | `npm run preview` | Prévisualise le build localement après `npm run build`. |
 
-Si la commande `build` échoue sur `tsc` (projet surtout en JSX), lance `npx vite build` ou retire `tsc &&` du script dans `package.json`.
+### Déploiement Vercel
+
+Le projet inclut un `vercel.json` avec réécriture SPA vers `index.html`. La commande de build est `npm run build` ; le répertoire de sortie est **`dist`**. Aucune variable d’environnement n’est requise pour ce dépôt statique.
 
 ## Structure du projet (principale)
 
