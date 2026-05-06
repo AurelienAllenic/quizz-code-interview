@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-terminal: 'Space Mono', monospace;
+
+  --color-sql-400: #60a5fa;
+  --color-sql-500: #3b82f6;
+  --color-sql-600: #1d4ed8;
+  --color-node-400: #4ade80;
+  --color-node-500: #22c55e;
+  --color-node-600: #15803d;
+  --color-react-400: #22d3ee;
+  --color-react-500: #06b6d4;
+  --color-react-600: #0e7490;
+  --color-django-400: #fbbf24;
+  --color-django-500: #f59e0b;
+  --color-django-600: #b45309;
+  --color-typescript-400: #818cf8;
+  --color-typescript-500: #6366f1;
+  --color-typescript-600: #4338ca;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: 'Syne', sans-serif;
+  background: #050810;
+  color: #e2e8f0;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0e1a;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(59, 130, 246, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.glass {
+  background: rgba(10, 14, 26, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.glow-sql {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15), 0 0 40px rgba(59, 130, 246, 0.05);
+}
+.glow-node {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.15), 0 0 40px rgba(34, 197, 94, 0.05);
+}
+.glow-react {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.15), 0 0 40px rgba(6, 182, 212, 0.05);
+}
+.glow-django {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.15), 0 0 40px rgba(245, 158, 11, 0.05);
+}
+.glow-typescript {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15), 0 0 40px rgba(99, 102, 241, 0.05);
+}
+
+.border-sql { border-color: rgba(59, 130, 246, 0.4); }
+.border-node { border-color: rgba(34, 197, 94, 0.4); }
+.border-react { border-color: rgba(6, 182, 212, 0.4); }
+.border-django { border-color: rgba(245, 158, 11, 0.4); }
+.border-typescript { border-color: rgba(99, 102, 241, 0.4); }
+
+.text-sql { color: #60a5fa; }
+.text-node { color: #4ade80; }
+.text-react { color: #22d3ee; }
+.text-django { color: #fbbf24; }
+.text-typescript { color: #818cf8; }
+
+.bg-sql { background: rgba(59, 130, 246, 0.1); }
+.bg-node { background: rgba(34, 197, 94, 0.1); }
+.bg-react { background: rgba(6, 182, 212, 0.1); }
+.bg-django { background: rgba(245, 158, 11, 0.1); }
+.bg-typescript { background: rgba(99, 102, 241, 0.1); }
+
+.gradient-sql { background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(29, 78, 216, 0.05)); }
+.gradient-node { background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(21, 128, 61, 0.05)); }
+.gradient-react { background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(14, 116, 144, 0.05)); }
+.gradient-django { background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(180, 83, 9, 0.05)); }
+.gradient-typescript { background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(67, 56, 202, 0.05)); }
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.font-display { font-family: 'Syne', sans-serif; }
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+.font-terminal { font-family: 'Space Mono', monospace; }
+
+.correct-flash {
+  animation: correctFlash 0.5s ease-out;
+}
+.wrong-flash {
+  animation: wrongFlash 0.5s ease-out;
+}
+
+@keyframes correctFlash {
+  0% { background: rgba(34, 197, 94, 0.4); }
+  100% { background: transparent; }
+}
+@keyframes wrongFlash {
+  0% { background: rgba(239, 68, 68, 0.4); }
+  100% { background: transparent; }
+}
