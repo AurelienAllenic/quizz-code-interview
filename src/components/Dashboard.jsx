@@ -1,8 +1,20 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Brain, Target, Zap, BookOpen, Download, Upload, Trash2, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react'
+import {
+  Brain,
+  Target,
+  Zap,
+  BookOpen,
+  Download,
+  Upload,
+  CheckCircle2,
+  XCircle,
+  RotateCcw,
+  GraduationCap,
+} from 'lucide-react'
 import CategoryCard from './CategoryCard'
 import CoursesPreview from './CoursesPreview'
+import ConfirmModal from './ConfirmModal'
 import { CATEGORIES, getAllQuestions } from '../data/quizData'
 
 function GlobalStats({ scores }) {
@@ -48,21 +60,18 @@ function GlobalStats({ scores }) {
   )
 }
 
-function DataPortability({ scores, onExport, onImport, onReset, importStatus }) {
-  const [showResetConfirm, setShowResetConfirm] = useState(false)
-
+function DataPortability({
+  scores,
+  coursesDone,
+  onExport,
+  onImport,
+  importStatus,
+  onOpenResetQuiz,
+  onOpenResetCourses,
+}) {
   const totalAnswered = Object.values(scores).reduce((s, sc) => s + (sc?.answered || 0), 0)
-  const hasData = totalAnswered > 0
-
-  const handleReset = () => {
-    if (showResetConfirm) {
-      onReset()
-      setShowResetConfirm(false)
-    } else {
-      setShowResetConfirm(true)
-      setTimeout(() => setShowResetConfirm(false), 4000)
-    }
-  }
+  const hasQuizData = totalAnswered > 0
+  const coursesMarked = Object.keys(coursesDone ?? {}).length
 
   return (
     <motion.div
@@ -75,70 +84,91 @@ function DataPortability({ scores, onExport, onImport, onReset, importStatus }) 
         className="glass rounded-2xl p-4"
         style={{ border: '1px solid rgba(255,255,255,0.06)' }}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          {/* Label */}
+        <div className="flex flex-col lg:flex-row lg:items-start gap-4">
           <div className="flex-1 min-w-0">
             <p className="text-slate-300 text-sm font-display font-600">Sauvegarde de la progression</p>
-            <p className="text-slate-600 text-xs font-mono mt-0.5">
-              {hasData
-                ? `${totalAnswered} réponse${totalAnswered > 1 ? 's' : ''} enregistrée${totalAnswered > 1 ? 's' : ''} · exportez pour ne rien perdre`
-                : 'Aucune progression à sauvegarder pour l\'instant'}
+            <p className="text-slate-600 text-xs font-mono mt-0.5 leading-relaxed">
+              {hasQuizData
+                ? `${totalAnswered} réponse${totalAnswered > 1 ? 's' : ''} quiz enregistrée${totalAnswered > 1 ? 's' : ''}`
+                : 'Aucune réponse quiz enregistrée pour l’instant'}
+              {coursesMarked > 0 && (
+                <>
+                  {' · '}
+                  <span className="text-slate-500">{coursesMarked} module{coursesMarked > 1 ? 's' : ''} de cours marqué{coursesMarked > 1 ? 's' : ''} terminé{coursesMarked > 1 ? 's' : ''}</span>
+                </>
+              )}
             </p>
           </div>
 
-          {/* Buttons */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Export */}
-            <button
-              onClick={onExport}
-              disabled={!hasData}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-terminal transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{
-                background: 'rgba(34,197,94,0.1)',
-                color: '#4ade80',
-                border: '1px solid rgba(34,197,94,0.3)',
-              }}
-              title="Télécharger la progression en JSON"
-            >
-              <Download size={13} />
-              Exporter
-            </button>
-
-            {/* Import */}
-            <button
-              onClick={onImport}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-terminal transition-all hover:scale-105 active:scale-95"
-              style={{
-                background: 'rgba(59,130,246,0.1)',
-                color: '#60a5fa',
-                border: '1px solid rgba(59,130,246,0.3)',
-              }}
-              title="Importer un fichier JSON de progression"
-            >
-              <Upload size={13} />
-              Importer
-            </button>
-
-            {/* Reset */}
-            {hasData && (
+          <div className="flex flex-col sm:flex-row gap-2 lg:shrink-0">
+            <div className="flex items-center gap-2 flex-wrap justify-end">
               <button
-                onClick={handleReset}
+                type="button"
+                onClick={onExport}
+                disabled={!hasQuizData && coursesMarked === 0}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-terminal transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{
+                  background: 'rgba(34,197,94,0.1)',
+                  color: '#4ade80',
+                  border: '1px solid rgba(34,197,94,0.3)',
+                }}
+                title="Exporter scores quiz et progression des cours"
+              >
+                <Download size={13} />
+                Exporter
+              </button>
+
+              <button
+                type="button"
+                onClick={onImport}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-terminal transition-all hover:scale-105 active:scale-95"
                 style={{
-                  background: showResetConfirm ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.04)',
-                  color: showResetConfirm ? '#f87171' : '#475569',
-                  border: `1px solid ${showResetConfirm ? 'rgba(239,68,68,0.4)' : 'rgba(71,85,105,0.4)'}`,
+                  background: 'rgba(59,130,246,0.1)',
+                  color: '#60a5fa',
+                  border: '1px solid rgba(59,130,246,0.3)',
                 }}
-                title="Réinitialiser toute la progression"
+                title="Importer un fichier JSON"
               >
-                {showResetConfirm ? <AlertTriangle size={13} /> : <Trash2 size={13} />}
-                {showResetConfirm ? 'Confirmer ?' : 'Reset'}
+                <Upload size={13} />
+                Importer
               </button>
-            )}
+            </div>
+
+            <div className="flex flex-wrap gap-2 justify-end sm:border-l sm:border-white/10 sm:pl-3 lg:border-l-0 lg:pl-0 lg:border-t-0 lg:pt-0 pt-3 border-t border-white/[0.07] lg:ml-0">
+              <button
+                type="button"
+                onClick={onOpenResetQuiz}
+                disabled={!hasQuizData}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-terminal transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{
+                  background: 'rgba(245,158,11,0.08)',
+                  color: '#fbbf24',
+                  border: '1px solid rgba(245,158,11,0.28)',
+                }}
+                title="Effacer tous les résultats des quiz"
+              >
+                <RotateCcw size={13} />
+                Reset quiz
+              </button>
+              <button
+                type="button"
+                onClick={onOpenResetCourses}
+                disabled={coursesMarked === 0}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-terminal transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{
+                  background: 'rgba(129,140,248,0.1)',
+                  color: '#818cf8',
+                  border: '1px solid rgba(129,140,248,0.35)',
+                }}
+                title="Effacer les modules de cours terminés"
+              >
+                <GraduationCap size={13} />
+                Reset cours
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Status toast */}
         <AnimatePresence>
           {importStatus && (
             <motion.div
@@ -157,8 +187,8 @@ function DataPortability({ scores, onExport, onImport, onReset, importStatus }) 
                 }}
               >
                 {importStatus === 'success'
-                  ? <><CheckCircle2 size={13} /> Progression importée avec succès — les scores ont été fusionnés.</>
-                  : <><XCircle size={13} /> Fichier invalide. Assure-toi d'importer un fichier exporté depuis cette app.</>
+                  ? <><CheckCircle2 size={13} /> Données importées avec succès (scores et cours fusionnés si présents).</>
+                  : <><XCircle size={13} /> Fichier invalide. Importe un JSON exporté depuis cette app.</>
                 }
               </div>
             </motion.div>
@@ -169,9 +199,51 @@ function DataPortability({ scores, onExport, onImport, onReset, importStatus }) 
   )
 }
 
-export default function Dashboard({ scores, onStartQuiz, onExport, onImport, onReset, importStatus }) {
+export default function Dashboard({
+  scores,
+  coursesDone,
+  onStartQuiz,
+  onExport,
+  onImport,
+  onResetScores,
+  onResetCoursesDone,
+  onCourseDoneToggle,
+  importStatus,
+}) {
+  const [pendingReset, setPendingReset] = useState(null)
+
   return (
-    <div className="min-h-screen bg-[#050810] grid-bg">
+    <>
+      <ConfirmModal
+        open={pendingReset === 'quiz'}
+        title="Réinitialiser les quiz ?"
+        message="Tous les scores et le détail des réponses par question seront effacés sur cet appareil. Les cours marqués comme terminés ne sont pas modifiés."
+        confirmLabel="Oui, effacer les quiz"
+        cancelLabel="Annuler"
+        danger
+        onConfirm={() => {
+          onResetScores()
+          setPendingReset(null)
+        }}
+        onCancel={() => setPendingReset(null)}
+      />
+      <ConfirmModal
+        open={pendingReset === 'courses'}
+        title={"Réinitialiser l'avancée des cours ?"}
+        message={
+          'Toutes les validations « cours terminé » seront supprimées. Tu pourras les valider à nouveau après relecture.'
+        }
+        confirmLabel={"Oui, effacer l'avancée cours"}
+        cancelLabel="Annuler"
+        danger
+        onConfirm={() => {
+          onResetCoursesDone()
+          setPendingReset(null)
+        }}
+        onCancel={() => setPendingReset(null)}
+      />
+
+      <div className="min-h-screen bg-[#050810] grid-bg">
       {/* Ambient blobs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-20%] left-[-10%] w-96 h-96 rounded-full blur-[120px]" style={{ background: 'rgba(59,130,246,0.06)' }} />
@@ -217,13 +289,19 @@ export default function Dashboard({ scores, onStartQuiz, onExport, onImport, onR
         {/* Data portability */}
         <DataPortability
           scores={scores}
+          coursesDone={coursesDone}
           onExport={onExport}
           onImport={onImport}
-          onReset={onReset}
           importStatus={importStatus}
+          onOpenResetQuiz={() => setPendingReset('quiz')}
+          onOpenResetCourses={() => setPendingReset('courses')}
         />
 
-        <CoursesPreview categories={CATEGORIES} />
+        <CoursesPreview
+          categories={CATEGORIES}
+          coursesDone={coursesDone}
+          onCourseDoneToggle={onCourseDoneToggle}
+        />
 
         {/* 5-category grid : 2 cols on md, last card centered if odd */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -255,5 +333,6 @@ export default function Dashboard({ scores, onStartQuiz, onExport, onImport, onR
         </motion.p>
       </div>
     </div>
+    </>
   )
 }

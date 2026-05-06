@@ -6,7 +6,8 @@ import SetSelector from './components/SetSelector'
 import { CATEGORIES, getAllQuestions, shuffle, prepareQuestionForSession } from './data/quizData'
 
 const STORAGE_KEY = 'fullstack-quiz-scores'
-const EXPORT_VERSION = 1
+const COURSES_DONE_KEY = 'fullstack-quiz-courses-done'
+const EXPORT_VERSION = 2
 
 function loadScores() {
   try {
@@ -23,8 +24,27 @@ function saveScores(scores) {
   } catch {}
 }
 
+/** Objet questionId → true lorsque le module de cours est marqué terminé */
+function loadCoursesDone() {
+  try {
+    const raw = localStorage.getItem(COURSES_DONE_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function saveCoursesDone(done) {
+  try {
+    localStorage.setItem(COURSES_DONE_KEY, JSON.stringify(done))
+  } catch {}
+}
+
 export default function App() {
   const [scores, setScores] = useState(loadScores)
+  const [coursesDone, setCoursesDone] = useState(loadCoursesDone)
   const [activeCategory, setActiveCategory] = useState(null)   // category currently being quizzed
   const [pendingCategory, setPendingCategory] = useState(null) // category waiting for set selection
   const [sessionQuestions, setSessionQuestions] = useState([]) // shuffled questions for this session
@@ -40,11 +60,22 @@ export default function App() {
     })
   }, [])
 
+  const handleCourseDoneToggle = useCallback((questionId, done) => {
+    setCoursesDone((prev) => {
+      const next = { ...prev }
+      if (done) next[questionId] = true
+      else delete next[questionId]
+      saveCoursesDone(next)
+      return next
+    })
+  }, [])
+
   const handleExport = useCallback(() => {
     const payload = {
       version: EXPORT_VERSION,
       exportedAt: new Date().toISOString(),
       scores,
+      coursesDone,
     }
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -54,7 +85,7 @@ export default function App() {
     a.download = `fullstack-quiz-${date}.json`
     a.click()
     URL.revokeObjectURL(url)
-  }, [scores])
+  }, [scores, coursesDone])
 
   const handleImportClick = () => {
     fileInputRef.current?.click()
@@ -78,6 +109,14 @@ export default function App() {
         const merged = { ...scores, ...incoming }
         setScores(merged)
         saveScores(merged)
+        const incomingDone = parsed.coursesDone ?? parsed.completedCourses
+        if (incomingDone && typeof incomingDone === 'object' && !Array.isArray(incomingDone)) {
+          setCoursesDone((prev) => {
+            const next = { ...prev, ...incomingDone }
+            saveCoursesDone(next)
+            return next
+          })
+        }
         setImportStatus('success')
       } catch {
         setImportStatus('error')
@@ -93,6 +132,11 @@ export default function App() {
   const handleResetScores = useCallback(() => {
     setScores({})
     saveScores({})
+  }, [])
+
+  const handleResetCoursesDone = useCallback(() => {
+    setCoursesDone({})
+    saveCoursesDone({})
   }, [])
 
   const handleStartQuiz = (categoryId) => {
@@ -167,10 +211,13 @@ export default function App() {
           <Dashboard
             key="dashboard"
             scores={scores}
+            coursesDone={coursesDone}
             onStartQuiz={handleStartQuiz}
             onExport={handleExport}
             onImport={handleImportClick}
-            onReset={handleResetScores}
+            onResetScores={handleResetScores}
+            onResetCoursesDone={handleResetCoursesDone}
+            onCourseDoneToggle={handleCourseDoneToggle}
             importStatus={importStatus}
           />
         )}

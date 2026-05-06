@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import Markdown from 'react-markdown'
-import { BookMarked, ChevronRight } from 'lucide-react'
+import { BookMarked, ChevronRight, CheckCircle2 } from 'lucide-react'
 
 const THEME = {
   sql: {
@@ -81,8 +81,13 @@ function markdownComponents(catTheme) {
 
 /**
  * Bloc d’accueil : modules de cours (Markdown) par catégorie / set, avant la grille des quiz.
+ *
+ * @param {object} props
+ * @param {typeof import('../data/quizData').CATEGORIES} props.categories
+ * @param {Record<string, boolean>} props.coursesDone — id question → cours marqué terminé
+ * @param {(questionId: string, done: boolean) => void} props.onCourseDoneToggle
  */
-export default function CoursesPreview({ categories }) {
+export default function CoursesPreview({ categories, coursesDone = {}, onCourseDoneToggle }) {
   const courseCategories = useMemo(
     () =>
       categories.filter((cat) =>
@@ -90,6 +95,21 @@ export default function CoursesPreview({ categories }) {
       ),
     [categories],
   )
+
+  const courseStats = useMemo(() => {
+    let total = 0
+    let done = 0
+    for (const cat of courseCategories) {
+      for (const set of cat.sets) {
+        for (const q of set.questions) {
+          if (!q.courseContent) continue
+          total += 1
+          if (coursesDone[q.id]) done += 1
+        }
+      }
+    }
+    return { total, done }
+  }, [courseCategories, coursesDone])
 
   const [activeId, setActiveId] = useState(() => courseCategories[0]?.id ?? '')
 
@@ -126,6 +146,14 @@ export default function CoursesPreview({ categories }) {
                 Cours pour les 5 parcours (SQL, Node.js, React, Django, TypeScript) · ouvre un set puis une notion · à
                 lire avant de lancer le quiz correspondant
               </p>
+              {courseStats.total > 0 && (
+                <p className="text-slate-500/90 text-xs font-mono mt-2 tabular-nums">
+                  Modules terminés :{' '}
+                  <span style={{ color: theme.accent }} className="font-600">
+                    {courseStats.done}/{courseStats.total}
+                  </span>
+                </p>
+              )}
             </div>
           </div>
 
@@ -176,23 +204,68 @@ export default function CoursesPreview({ categories }) {
                 </summary>
 
                 <div className="px-3 pb-3 pt-0 space-y-2 border-t border-white/5">
-                  {withCourse.map((q) => (
+                  {withCourse.map((q) => {
+                    const isDone = !!coursesDone[q.id]
+                    return (
                     <details
                       key={q.id}
-                      className="group/q rounded-lg border border-white/[0.05] bg-[#070b14]/80"
+                      className={`group/q rounded-lg border bg-[#070b14]/80 ${
+                        isDone ? 'border-emerald-500/35' : 'border-white/[0.05]'
+                      }`}
                     >
                       <summary className="cursor-pointer select-none list-none flex items-center gap-2 px-3 py-2 text-xs font-mono text-slate-300 rounded-lg [&::-webkit-details-marker]:hidden hover:bg-white/[0.04]">
                         <ChevronRight
                           size={14}
                           className="text-slate-600 shrink-0 transition-transform group-open/q:rotate-90"
                         />
-                        <span className="truncate">{q.keyword || q.id}</span>
+                        {isDone ? (
+                          <CheckCircle2 size={14} className="shrink-0 text-emerald-400" aria-hidden />
+                        ) : null}
+                        <span className={`truncate ${isDone ? 'text-emerald-100/90' : ''}`}>{q.keyword || q.id}</span>
                       </summary>
                       <div className="course-md px-3 pb-3 pt-1 border-t border-white/[0.04]">
                         <Markdown components={markdownComponents(theme)}>{q.courseContent}</Markdown>
+                        <div className="mt-4 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
+                          {isDone ? (
+                            <>
+                              <span className="flex items-center gap-1.5 text-xs font-mono text-emerald-400/95">
+                                <CheckCircle2 size={15} strokeWidth={2.25} aria-hidden />
+                                Cours terminé
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onCourseDoneToggle(q.id, false)
+                                }}
+                                className="text-xs font-terminal px-3 py-1.5 rounded-lg transition-colors hover:bg-white/10 text-slate-400 hover:text-white"
+                                style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+                              >
+                                Annuler la validation
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onCourseDoneToggle(q.id, true)
+                              }}
+                              className="text-xs font-terminal px-3 py-2 rounded-lg transition-all hover:scale-[1.02] active:scale-[0.98] font-600 ml-auto sm:ml-0"
+                              style={{
+                                background: theme.tabActive,
+                                color: theme.accent,
+                                border: `1px solid ${theme.border}`,
+                              }}
+                            >
+                              Marquer ce cours comme terminé
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </details>
-                  ))}
+                    )
+                  })}
                 </div>
               </details>
             )
