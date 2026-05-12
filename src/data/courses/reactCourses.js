@@ -275,7 +275,7 @@ const useBear = create((set) => ({
 Évitez d’y placer **PII** ou jetons persistés en clair. Découpez plutôt l’état en plusieurs boutiques (slices / domaines) pour limiter le couplage et les re-rendus larges.`,
   'react-ssr': `## Le concept
 
-Le **SSR** exécute les composants côté **serveur** pour produire du HTML envoyé au client (**FCP** amélioré, SEO partagé avec crawlers qui n’exécutent pas JS).** **L’hydratation** ré-attache ensuite les événements côté client.**
+Le **SSR** exécute les composants côté **serveur** pour produire du HTML envoyé au client (**FCP** amélioré, SEO partagé avec crawlers qui n’exécutent pas JS). **L’hydratation** ré-attache ensuite les événements côté client.
 
 ## Le mécanisme
 
@@ -287,7 +287,7 @@ hydrateRoot(document.getElementById('root'), <App />);
 
 ## Production
 
-Évitez les **differences d’hydratation** (**hydration mismatch**) : RNG, locales, timestamps non stabilisés.** **Divisez données sensibles** : ce qui part dans le HTML est **inspectable.**`,
+Évitez les **différences d’hydratation** (**hydration mismatch**) : RNG, locales, timestamps non stabilisés. **Divisez les données sensibles** : ce qui part dans le HTML est **inspectable**.`,
 
   'react-memo-perf': `## Le concept
 
@@ -295,7 +295,7 @@ Optimiser combine **profiler React**, **virtualisation des listes**, **mémoïsa
 
 ## Le mécanisme
 
-Identifiez les **couches chaudes** : contextes trop généralistes, props instables depuis parents, computations lourdes recalculées à chaque frappe.**
+Identifiez les **couches chaudes** : contextes trop généralistes, props instables depuis parents, computations lourdes recalculées à chaque frappe.
 
 \`\`\`jsx
 const visible = useMemo(() => heavyFilter(rows, q), [rows, q]);

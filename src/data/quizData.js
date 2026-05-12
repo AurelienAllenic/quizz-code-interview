@@ -5,6 +5,16 @@ export function getAllQuestions(category) {
   return category.sets.flatMap(s => s.questions)
 }
 
+/** Évite qu’une même question (même `id`) apparaisse deux fois si les données fusionnent plusieurs sets. */
+export function uniqueQuestionsById(questions) {
+  const seen = new Set()
+  return questions.filter((q) => {
+    if (seen.has(q.id)) return false
+    seen.add(q.id)
+    return true
+  })
+}
+
 export function shuffle(arr) {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
@@ -16,7 +26,8 @@ export function shuffle(arr) {
 
 /**
  * Pour chaque QCM : mélange l'ordre des propositions et met à jour l'index `correct`.
- * Évite le biais "toujours la réponse A" et réduit l'effet "la plus longue = la bonne".
+ * Évite le biais « toujours la réponse A ». Réduire le biais « la plus longue » : écrire des distracteurs
+ * de longueur comparable à la bonne réponse dans les données ; l’UI limite aussi la hauteur visible des libellés.
  */
 export function prepareQuestionForSession(question) {
   if (question.type !== 'mcq' || !Array.isArray(question.options) || question.options.length < 2) {
@@ -394,9 +405,9 @@ const RAW_CATEGORIES = [
             question: 'Quels sont les 4 grands types de bases NoSQL et leurs cas d\'usage ?',
             options: [
               'Document (MongoDB), Clé-valeur (Redis), Colonnes larges (Cassandra), Graphe (Neo4j)',
-              'SQL, XML, JSON, CSV',
-              'Relationnelle, Objet, Réseau, Hiérarchique',
-              'Mémoire, Disque, Cloud, Hybride',
+              'Les familles SQL, XML structuré, JSON brut et CSV plat — présentées comme les quatre grands paradigmes NoSQL',
+              'Modèles Relationnel, Objet, Réseau et Hiérarchique hérités des cours SGBDR classiques (pas une taxonomie NoSQL)',
+              'Classes de stockage : RAM volatile, disque bloc, objet cloud multi-région et « hybride » sans lien avec document/clé-valeur',
             ],
             correct: 0,
             explanation: '| Type | Exemple | Cas d\'usage |\n|---|---|---|\n| **Document** | MongoDB, CouchDB | CMS, catalogues, profils users |\n| **Clé-valeur** | Redis, DynamoDB | Sessions, cache, files de messages |\n| **Colonnes larges** | Cassandra, HBase | Time-series, logs, IoT (haute écriture) |\n| **Graphe** | Neo4j, Neptune | Réseaux sociaux, recommandations |\n\n**Théorème CAP** : un système distribué ne peut garantir que 2 des 3 :\n• **C**onsistency : toutes les lectures voient la dernière écriture\n• **A**vailability : toujours une réponse\n• **P**artition tolerance : résiste aux coupures réseau\n\nNoSQL choisit souvent AP = éventuelle cohérence.',
@@ -580,9 +591,9 @@ const RAW_CATEGORIES = [
             question: 'Qu\'est-ce que CORS et pourquoi une requête depuis localhost:3000 vers localhost:4000 est-elle bloquée ?',
             options: [
               'CORS (Cross-Origin Resource Sharing) : le navigateur bloque les requêtes vers une origine différente (port/domaine) sauf si le serveur l\'autorise explicitement',
-              'CORS est un firewall réseau qui bloque le trafic non chiffré',
-              'CORS bloque uniquement les requêtes POST, pas les GET',
-              'CORS est activé automatiquement par Node.js pour toutes les requêtes',
+              'CORS est parfois confondu avec un pare-feu ou « HTTPS only » : on croit qu’il bloque le trafic non chiffré plutôt qu’il ne gère l’origine',
+              'On croit à tort que CORS ne s’applique qu’aux requêtes POST et laisse passer tous les GET cross-origin sans en-têtes',
+              'On suppose que Node.js et Express activent CORS permissif par défaut sur chaque route sans middleware ni en-têtes `Access-Control-*`',
             ],
             correct: 0,
             explanation: '**Origine** = protocole + domaine + port. Deux origines différentes → CORS.\n\n```js\n// Express avec le package cors\nconst cors = require("cors");\n\napp.use(cors({\n  origin: ["http://localhost:3000", "https://monapp.fr"],\n  methods: ["GET", "POST", "PUT", "DELETE"],\n  allowedHeaders: ["Content-Type", "Authorization"],\n  credentials: true, // pour les cookies/sessions\n}));\n```\n\n**Preflight** : le navigateur envoie d\'abord une requête OPTIONS pour vérifier les permissions avant la vraie requête (pour POST, PUT, requêtes avec headers custom).',
@@ -827,9 +838,9 @@ const RAW_CATEGORIES = [
             question: 'Quand devriez-vous utiliser le Context API plutôt que les props ?',
             options: [
               'Pour des données globales (thème, user connecté, langue) qui doivent être accessibles par beaucoup de composants sans prop drilling',
-              'Toujours, Context est supérieur aux props en toutes circonstances',
-              'Uniquement pour les appels API',
-              'Pour les animations et les transitions',
+              'Toujours préférer Context aux props pour tout état, local ou profond, sans tenir compte des re-renders ni du coût du Provider',
+              'Principalement pour centraliser les appels fetch/axios et ne diffuser que les réponses JSON, sans autre rôle dans le graphe UI',
+              'Pour piloter animations, transitions et gestes au niveau racine, comme remplacement des bibliothèques d’animation dédiées',
             ],
             correct: 0,
             explanation: '**Prop drilling** : passer des props à travers de nombreux composants intermédiaires.\n\n```js\nconst ThemeContext = createContext("light");\n\nfunction App() {\n  return (\n    <ThemeContext.Provider value="dark">\n      <DeepChild />\n    </ThemeContext.Provider>\n  );\n}\nfunction DeepChild() {\n  const theme = useContext(ThemeContext);\n}\n```\n\n⚠️ Context re-render tous les consommateurs quand la valeur change. Pour des états complexes, préférer Zustand/Redux.',
@@ -1150,9 +1161,9 @@ const RAW_CATEGORIES = [
             question: 'Dans Django, que représentent M, V et T dans le pattern MVT ?',
             options: [
               'Model (données/DB), View (logique métier), Template (présentation HTML)',
-              'Module, Variable, Type',
-              'Middleware, View, Transport',
-              'Model, Variable, Template',
+              'Module (couche paquetage), Variable (nommage des routes), Type (annotations) — jargon parfois cité à tort pour MVT',
+              'Middleware (couche entrée), View (contrôleur HTTP), Transport (WebSockets/TCP) — confusion avec la pile réseau',
+              'Model (objets ORM), Variable de template seule, Template — sans le rôle « View » de logique métier',
             ],
             correct: 0,
             explanation: '**MVT de Django vs MVC classique :**\n\n| MVT Django | MVC classique | Rôle |\n|---|---|---|\n| Model | Model | Données + ORM |\n| View | Controller | Logique métier |\n| Template | View | Présentation HTML |\n\nLe Controller "caché" est Django lui-même (URL dispatcher).\n\n```python\nurlpatterns = [path("users/", views.user_list)]\n\ndef user_list(request):\n    users = User.objects.all()  # Model\n    return render(request, "users.html", {"users": users})  # Template\n```',
@@ -1164,9 +1175,9 @@ const RAW_CATEGORIES = [
             question: 'Qu\'est-ce que l\'ORM Django et quel problème résout-il ?',
             options: [
               'Un système qui mappe des classes Python vers des tables SQL, permettant d\'écrire des requêtes en Python sans SQL brut',
-              'Un outil de caching de base de données',
-              'Un système d\'authentification intégré',
-              'Un format de sérialisation comme JSON mais pour les modèles',
+              'Un cache de second niveau qui duplique les tables en mémoire pour accélérer les lectures — parfois confondu avec l’ORM',
+              'Un module d’authentification intégré qui filtre chaque requête utilisateur — distinct du mapping objet-relationnel',
+              'Un format de sérialisation JSON/XML spécifique aux modèles, distinct du schéma SQL et du mapping ORM',
             ],
             correct: 0,
             explanation: '**ORM = Object-Relational Mapping**\n\n```python\n# Avec ORM Django (pas de SQL)\nusers = User.objects.filter(age__gte=18).order_by("name")\n\n# Équivalent SQL généré :\n# SELECT * FROM users WHERE age >= 18 ORDER BY name;\n```\n\n✅ Code Python pur, protection contre l\'injection SQL, indépendance de la BDD, migrations auto.\n⚠️ Peut générer des requêtes sous-optimales pour les cas complexes.',
@@ -1529,9 +1540,9 @@ const RAW_CATEGORIES = [
             question: 'À quoi servent les génériques (generics) en TypeScript ?',
             options: [
               'Créer des fonctions et types réutilisables qui fonctionnent avec n\'importe quel type tout en conservant la sécurité du typage',
-              'Générer automatiquement des types à partir d\'une API REST',
-              'Remplacer le type `any` dans tous les cas',
-              'Accélérer la compilation TypeScript',
+              'Générer automatiquement des fichiers de types ou des schémas à partir d’OpenAPI ou JSON Schema — ce sont des outils, pas la syntaxe `<T>`',
+              'Remplacer le type `any` partout par des alias qui ne font pas d’inférence — confusion entre générique et remplacement purement cosmétique',
+              'Réduire le temps de compilation en ajoutant des paramètres de type sur chaque appel — le compilateur ne fonctionne pas ainsi',
             ],
             correct: 0,
             explanation: '```ts\n// Sans génériques : perd le type\nfunction first(arr: any[]): any { return arr[0]; }\n\n// Avec génériques : type préservé !\nfunction first<T>(arr: T[]): T { return arr[0]; }\n\nconst n = first([1, 2, 3]);  // n: number ✓\nconst s = first(["a", "b"]); // s: string ✓\n\n// Contrainte sur T\nfunction getLength<T extends { length: number }>(val: T): number {\n  return val.length;\n}\n\n// Interface générique\ninterface ApiResponse<T> {\n  data: T;\n  status: number;\n  message: string;\n}\ntype UserResponse = ApiResponse<User>;\n```',

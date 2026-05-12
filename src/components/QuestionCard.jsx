@@ -140,7 +140,11 @@ export default function QuestionCard({ question, theme, questionNumber, total, o
               >
                 {String.fromCharCode(65 + idx)}
               </span>
-              <span className="text-sm font-mono flex-1" style={{ color: textColor }}>
+              <span
+                className="text-sm font-mono flex-1 leading-snug max-h-[5.5rem] overflow-y-auto pr-1 [scrollbar-width:thin]"
+                style={{ color: textColor }}
+                title={option}
+              >
                 {option}
               </span>
               {icon}
