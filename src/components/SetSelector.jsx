@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shuffle, BookOpen, X, ChevronRight } from 'lucide-react'
+import { Shuffle, BookOpen, X, ChevronRight, PlayCircle } from 'lucide-react'
 import { getAllQuestions } from '../data/quizData'
+import { loadSessionDraft } from '../sessionDraft'
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock'
 
 const themeColors = {
@@ -12,7 +13,7 @@ const themeColors = {
   typescript: { accent: '#6366f1', light: '#818cf8', bg: 'rgba(99,102,241,0.08)',  border: 'rgba(99,102,241,0.3)' },
 }
 
-export default function SetSelector({ category, scores, onSelect, onClose }) {
+export default function SetSelector({ category, scores, onSelect, onResume, onClose }) {
   const open = Boolean(category)
   useBodyScrollLock(open)
 
@@ -31,6 +32,9 @@ export default function SetSelector({ category, scores, onSelect, onClose }) {
 
   if (!category) return null
   const t = themeColors[category.theme]
+  const draft = loadSessionDraft()
+  const canResume = Boolean(onResume && draft?.categoryId === category.id && Array.isArray(draft.questions) && draft.questions.length > 0)
+  const resumeIndex = canResume ? Math.min(Math.max(0, draft.currentIndex ?? 0), draft.questions.length - 1) : 0
   const allQuestions = getAllQuestions(category)
   const totalAnswered = scores?.answered || 0
   const totalCorrect = scores?.correct || 0
@@ -112,6 +116,35 @@ export default function SetSelector({ category, scores, onSelect, onClose }) {
               </p>
             </div>
 
+            {canResume && (
+              <motion.button
+                type="button"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                onClick={() => onResume?.()}
+                className="w-full text-left px-4 py-3.5 rounded-xl transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center gap-3 mb-3"
+                style={{
+                  background: `linear-gradient(135deg, ${t.accent}33, ${t.accent}12)`,
+                  border: `1px solid ${t.border}`,
+                  boxShadow: `0 0 24px ${t.accent}18`,
+                }}
+              >
+                <div
+                  className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
+                  style={{ background: t.bg, border: `1px solid ${t.border}` }}
+                >
+                  <PlayCircle size={18} style={{ color: t.light }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-display font-600 text-sm text-white">Reprendre la session</p>
+                  <p className="text-slate-500 text-xs font-mono">
+                    {draft.sessionLabel || 'En cours'} · question {resumeIndex + 1}/{draft.questions.length} · même ordre / options
+                  </p>
+                </div>
+                <ChevronRight size={14} style={{ color: t.light }} />
+              </motion.button>
+            )}
+
             <div className="space-y-3">
               {options.map((opt, i) => {
                 const pct = opt.isSpecial ? null
@@ -171,7 +204,9 @@ export default function SetSelector({ category, scores, onSelect, onClose }) {
             </div>
 
             <p className="text-slate-700 text-xs font-mono text-center mt-4">
-              Les questions sont mélangées à chaque session
+              {canResume
+                ? 'Un brouillon est conservé sur cet appareil si tu quittes avec « Retour ». Choisir un set lance un nouveau tirage.'
+                : 'Les questions sont mélangées à chaque session'}
             </p>
           </div>
         </motion.div>

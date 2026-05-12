@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard'
 import QuizMode from './components/QuizMode'
 import SetSelector from './components/SetSelector'
 import { CATEGORIES, getAllQuestions, shuffle, prepareQuestionForSession, uniqueQuestionsById } from './data/quizData'
+import { loadSessionDraft, saveSessionDraft, clearSessionDraft } from './sessionDraft'
 
 const STORAGE_KEY = 'fullstack-quiz-scores'
 const COURSES_DONE_KEY = 'fullstack-quiz-courses-done'
@@ -49,6 +50,8 @@ export default function App() {
   const [pendingCategory, setPendingCategory] = useState(null) // category waiting for set selection
   const [sessionQuestions, setSessionQuestions] = useState([]) // shuffled questions for this session
   const [sessionLabel, setSessionLabel] = useState('')
+  const [sessionSetId, setSessionSetId] = useState(null) // 'all' | set.id — pour le brouillon de reprise
+  const [initialQuestionIndex, setInitialQuestionIndex] = useState(null) // reprise uniquement
   const [importStatus, setImportStatus] = useState(null) // 'success' | 'error' | null
   const fileInputRef = useRef(null)
 
@@ -109,6 +112,7 @@ export default function App() {
         const merged = { ...scores, ...incoming }
         setScores(merged)
         saveScores(merged)
+        clearSessionDraft()
         const incomingDone = parsed.coursesDone ?? parsed.completedCourses
         if (incomingDone && typeof incomingDone === 'object' && !Array.isArray(incomingDone)) {
           setCoursesDone((prev) => {
@@ -132,6 +136,7 @@ export default function App() {
   const handleResetScores = useCallback(() => {
     setScores({})
     saveScores({})
+    clearSessionDraft()
   }, [])
 
   const handleResetCoursesDone = useCallback(() => {
@@ -147,6 +152,9 @@ export default function App() {
     const category = CATEGORIES.find(c => c.id === pendingCategory)
     if (!category) return
 
+    clearSessionDraft()
+    setInitialQuestionIndex(null)
+
     let raw
     let label
     if (setId === 'all') {
@@ -161,16 +169,62 @@ export default function App() {
     const questions = raw.map(prepareQuestionForSession)
     setSessionQuestions(questions)
     setSessionLabel(label)
+    setSessionSetId(setId)
     setPendingCategory(null)
     setActiveCategory(pendingCategory)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [pendingCategory])
 
-  const handleBack = () => {
+  const handleResumeSession = useCallback(() => {
+    const d = loadSessionDraft()
+    if (!d || d.categoryId !== pendingCategory || !Array.isArray(d.questions) || d.questions.length === 0) return
+    const max = d.questions.length - 1
+    const idx = Math.max(0, Math.min(d.currentIndex ?? 0, max))
+    setSessionQuestions(d.questions)
+    setSessionLabel(d.sessionLabel ?? '')
+    setSessionSetId(d.setId ?? 'all')
+    setInitialQuestionIndex(idx)
+    setPendingCategory(null)
+    setActiveCategory(d.categoryId)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [pendingCategory])
+
+  const handleQuizExit = useCallback((detail) => {
+    if (detail?.type === 'pause' && activeCategory && sessionQuestions.length > 0) {
+      saveSessionDraft({
+        categoryId: activeCategory,
+        setId: sessionSetId ?? 'all',
+        sessionLabel,
+        currentIndex: Math.min(Math.max(0, detail.currentIndex), sessionQuestions.length - 1),
+        questions: sessionQuestions,
+      })
+    }
+    if (detail?.type === 'finished') {
+      clearSessionDraft()
+    }
     setActiveCategory(null)
     setSessionQuestions([])
+    setSessionLabel('')
+    setSessionSetId(null)
+    setInitialQuestionIndex(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+  }, [activeCategory, sessionQuestions, sessionLabel, sessionSetId])
+
+  const handleQuizCompleted = useCallback(() => {
+    clearSessionDraft()
+  }, [])
+
+  /** Sauvegarde le brouillon sans quitter (rechargement, ou Retour redondant) */
+  const handleSessionSnapshot = useCallback(({ currentIndex: idx }) => {
+    if (!activeCategory || !sessionQuestions.length) return
+    saveSessionDraft({
+      categoryId: activeCategory,
+      setId: sessionSetId ?? 'all',
+      sessionLabel,
+      currentIndex: Math.min(Math.max(0, idx), sessionQuestions.length - 1),
+      questions: sessionQuestions,
+    })
+  }, [activeCategory, sessionQuestions, sessionLabel, sessionSetId])
 
   const category = CATEGORIES.find(c => c.id === activeCategory)
   const pendingCategoryData = CATEGORIES.find(c => c.id === pendingCategory)
@@ -192,6 +246,7 @@ export default function App() {
           category={pendingCategoryData}
           scores={scores[pendingCategory]}
           onSelect={handleSetSelect}
+          onResume={handleResumeSession}
           onClose={() => setPendingCategory(null)}
         />
       )}
@@ -199,12 +254,15 @@ export default function App() {
       <AnimatePresence mode="wait">
         {activeCategory && category ? (
           <QuizMode
-            key={`quiz-${activeCategory}-${sessionLabel}`}
+            key={`quiz-${activeCategory}-${sessionLabel}-${initialQuestionIndex ?? 'new'}`}
             category={category}
             questions={sessionQuestions}
             sessionLabel={sessionLabel}
             initialResults={scores[activeCategory]?.results || {}}
-            onBack={handleBack}
+            initialQuestionIndex={initialQuestionIndex ?? undefined}
+            onExit={handleQuizExit}
+            onQuizCompleted={handleQuizCompleted}
+            onSessionSnapshot={handleSessionSnapshot}
             onScoreUpdate={handleScoreUpdate}
           />
         ) : (

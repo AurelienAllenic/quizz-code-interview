@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, RotateCcw, Trophy, ChevronRight, Home, Shuffle } from 'lucide-react'
 import QuestionCard from './QuestionCard'
@@ -121,11 +121,39 @@ function ResultScreen({ questions, results, onRetry, onHome, onNewSet, theme }) 
   )
 }
 
-export default function QuizMode({ category, questions, sessionLabel, initialResults, onBack, onScoreUpdate }) {
-  const [currentIndex, setCurrentIndex] = useState(0)
+export default function QuizMode({
+  category,
+  questions,
+  sessionLabel,
+  initialResults,
+  initialQuestionIndex,
+  onExit,
+  onQuizCompleted,
+  onSessionSnapshot,
+  onScoreUpdate,
+}) {
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    if (typeof initialQuestionIndex !== 'number' || Number.isNaN(initialQuestionIndex)) return 0
+    return Math.max(0, initialQuestionIndex)
+  })
   const [results, setResults] = useState(initialResults || {})
   const [isFinished, setIsFinished] = useState(false)
   const t = themeColors[category.theme]
+
+  useEffect(() => {
+    if (questions.length > 0 && currentIndex >= questions.length) {
+      setCurrentIndex(questions.length - 1)
+    }
+  }, [questions.length, currentIndex])
+
+  useEffect(() => {
+    if (isFinished) onQuizCompleted?.()
+  }, [isFinished, onQuizCompleted])
+
+  useEffect(() => {
+    if (isFinished || questions.length === 0) return
+    onSessionSnapshot?.({ currentIndex })
+  }, [currentIndex, isFinished, questions.length, onSessionSnapshot])
 
   const handleAnswer = useCallback((questionId, correct) => {
     setResults(prev => {
@@ -136,6 +164,14 @@ export default function QuizMode({ category, questions, sessionLabel, initialRes
       return newResults
     })
   }, [category.id, onScoreUpdate])
+
+  const handleLeavePause = () => {
+    onExit({ type: 'pause', currentIndex })
+  }
+
+  const handleLeaveFinished = () => {
+    onExit({ type: 'finished' })
+  }
 
   const handleNext = () => {
     if (currentIndex < questions.length - 1) {
@@ -168,7 +204,7 @@ export default function QuizMode({ category, questions, sessionLabel, initialRes
         style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
       >
         <button
-          onClick={onBack}
+          onClick={handleLeavePause}
           className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm font-mono shrink-0"
         >
           <ArrowLeft size={16} />
@@ -211,8 +247,8 @@ export default function QuizMode({ category, questions, sessionLabel, initialRes
               questions={questions}
               results={results}
               onRetry={handleRetry}
-              onHome={onBack}
-              onNewSet={onBack}
+              onHome={handleLeaveFinished}
+              onNewSet={handleLeaveFinished}
               theme={category.theme}
             />
           ) : (
