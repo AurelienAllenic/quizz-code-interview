@@ -192,6 +192,10 @@ export default function QuizMode({
   const currentAnswered = results[currentQuestion?.id]
   const progressPct = ((currentIndex + (currentAnswered ? 1 : 0)) / questions.length) * 100
 
+  const answeredEntries = Object.values(results)
+  const correctCount = answeredEntries.filter(r => r.correct).length
+  const wrongCount = answeredEntries.filter(r => !r.correct).length
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -223,6 +227,32 @@ export default function QuizMode({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {/* Compteurs correct / faux */}
+          {answeredEntries.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              <motion.span
+                key={correctCount}
+                initial={{ scale: 1.3 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono font-600"
+                style={{ background: 'rgba(34,197,94,0.12)', color: '#4ade80', border: '1px solid rgba(34,197,94,0.25)' }}
+              >
+                ✓ {correctCount}
+              </motion.span>
+              <motion.span
+                key={`w${wrongCount}`}
+                initial={{ scale: 1.3 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono font-600"
+                style={{ background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid rgba(239,68,68,0.25)' }}
+              >
+                ✗ {wrongCount}
+              </motion.span>
+            </div>
+          )}
+
           <span className="text-slate-500 text-xs font-mono hidden sm:block">
             {currentIndex + 1}/{questions.length}
           </span>

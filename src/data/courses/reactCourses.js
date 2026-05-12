@@ -109,19 +109,23 @@ Les **gardes de route** (wrappers qui vérifient la session ou les rôles) amél
 
   jsx: `## Le concept
 
-Le **JSX** compile vers des appels qui créent des éléments React. Il mélange **balises**, **fragments**, **expressions entre accolades** et logique métier lisible.**
+Le **JSX** compile vers des appels qui créent des éléments React. Il mélange **balises**, **fragments**, **expressions entre accolades** et logique métier lisible. L'attribut **\`key\`** est au cœur de l'algorithme de réconciliation pour les listes.
 
 ## Le mécanisme
 
-Majuscule **→** composant fonction ou classe.** **Minuscule** → intrinsics DOM.**
+Majuscule → composant fonction ou classe. Minuscule → intrinsic DOM. Pour les listes, React utilise la \`key\` pour identifier les éléments entre deux rendus : une key **stable et unique** (ID) permet de réutiliser le nœud DOM existant. Utiliser l'**index comme key** dans une liste réorderable est un piège classique : si l'ordre change, les états locaux (inputs, checkboxes) restent attachés à la **position**, non à l'élément — les données se retrouvent sur le mauvais item.
 
 \`\`\`jsx
-<Card elevated={mode === 'pro'}>{children}</Card>
+{/* ❌ Dangereux si la liste est réorderable */}
+{items.map((item, i) => <Row key={i} {...item} />)}
+
+{/* ✅ Toujours préférer un ID stable */}
+{items.map(item => <Row key={item.id} {...item} />)}
 \`\`\`
 
 ## Production
 
-Prévenir **XSS** : interdire \`dangerouslySetInnerHTML\` non sanitisée ; filtrer **URLs** utilisateur avant \`href\`/\`src\`. Les **Server Components** (écosystème React) peuvent réduire le JavaScript envoyé au navigateur.`,
+Prévenir **XSS** : interdire \`dangerouslySetInnerHTML\` non sanitisée ; filtrer **URLs** utilisateur avant \`href\`/\`src\`. Les **Server Components** peuvent réduire le JavaScript envoyé au navigateur.`,
 
   'data-fetching': `## Le concept
 
